@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 from flask_wtf import FlaskForm
-from wtforms import (EmailField, PasswordField, StringField, SubmitField,
-                     ValidationError)
+from wtforms import (BooleanField, EmailField, PasswordField, StringField,
+                     SubmitField, ValidationError)
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 from app import db
@@ -33,3 +33,11 @@ class UserRegisterForm(FlaskForm):
     def validate_password(self, password):
         # TODO: Ensure password contain enough characters and signs
         pass
+
+
+class UserLoginForm(FlaskForm):
+    email = EmailField('Email', validators=[
+        DataRequired(), Length(max=64), Email()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
+    remember_me = BooleanField('Remember Me')
