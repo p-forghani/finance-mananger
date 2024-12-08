@@ -1,0 +1,2 @@
+FLASK_APP=finance_manager.py
+FLASK_DEBUG=1
