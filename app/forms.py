@@ -1,7 +1,10 @@
+from datetime import datetime
+
 import sqlalchemy as sa
 from flask_wtf import FlaskForm
-from wtforms import (BooleanField, EmailField, PasswordField, StringField,
-                     SubmitField, ValidationError)
+from wtforms import (BooleanField, DateField, EmailField, FloatField,
+                     PasswordField, StringField, SubmitField, TextAreaField,
+                     ValidationError)
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 from app import db
@@ -41,3 +44,10 @@ class UserLoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
     remember_me = BooleanField('Remember Me')
+
+
+class AddExpenseForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired(), Length(1, 128)])
+    amount = FloatField('Amount', validators=[DataRequired()])
+    description = TextAreaField("Description")
+    date = DateField('Date', default=datetime.today())

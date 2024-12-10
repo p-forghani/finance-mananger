@@ -1,15 +1,21 @@
 from urllib.parse import urlsplit
-from flask_login import login_user, current_user
+from flask_login import login_required, login_user, current_user, logout_user
 from app import app, db
 import sqlalchemy as sa
-from app.models import User
-from app.forms import UserRegisterForm, UserLoginForm
+from app.models import User, Expense
+from app.forms import UserRegisterForm, UserLoginForm, AddExpenseForm
 from flask import redirect, render_template, flash, request, url_for
 
 
 # index
 @app.route('/')
 def index():
+    return render_template('base.html')
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
     return render_template('base.html')
 
 
@@ -30,10 +36,11 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
-    # TODO: Change the dest url later
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        next_page = request.args.get('next')
+        if not next_page or urlsplit(next_page).netloc != '':
+            next_page = url_for('index')
+        return redirect(next_page)
 
     form = UserLoginForm()
     # Check user credentials
@@ -60,13 +67,33 @@ def login():
 
 @app.route('/logout')
 def logout():
-    return 'To be built'
+    logout_user()
+    return redirect(url_for('index'))
 
 
-# TODO: Delete this view for production
-@app.route('/userlist')
-def userlist():
-    users = db.session.scalars(
-        sa.select(User)
-    ).all()
-    return repr(users)
+@app.route('/profile')
+@login_required
+def profile():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    # TODO: Show user profile ifno and edit profile link
+
+
+@app.route('/expenses', methods=['GET', 'POST'])
+@login_required
+def expenses():
+    form = AddExpenseForm()
+    if form.validate_on_submit():
+        # build the expense object
+        expense = Expense(
+            title=form.title.data,
+            amount=form.amount.data,
+            expense_date=form.date.data,
+            description=form.description.data,
+            creator=current_user
+        )
+        db.session.add(expense)
+        db.session.commit()
+        flash('Expense added succesfully')
+        return redirect(url_for('dashboard'))
+    return render_template('add_expense.html', form=form)
