@@ -8,7 +8,7 @@ from wtforms import (BooleanField, DateField, EmailField, FloatField,
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 from app import db
-from app.models import User
+from app.models.user import User
 
 
 class UserRegisterForm(FlaskForm):

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3">Dashboard</h1>
+      <a href="{{ url_for('expenses.add_expense') }}" class="btn btn-primary">Add New Expense</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for expense in expenses %}
+          <tr>
+            <td>{{ expense.title }}</td>
+            <td>${{ expense.amount }}</td>
+            <td>{{ expense.expense_date.strftime('%Y-%m-%d') }}</td>
+            <td>
+              <a href="{{ url_for('expenses.show_expense', expense_id=expense.id) }}" class="btn btn-sm btn-info">View</a>
+              <a href="{{ url_for('expenses.edit_expense', expense_id=expense.id) }}" class="btn btn-sm btn-warning">Edit</a>
+              <a href="{{ url_for('expenses.delete_expense', expense_id=expense.id) }}"
+                 class="btn btn-sm btn-danger"
+                 onclick="return confirm('Are you sure you want to delete this expense?')">Delete</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="4" class="text-center">No expenses found. Add your first expense!</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

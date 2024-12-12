@@ -1,26 +1,35 @@
 from urllib.parse import urlsplit
-from flask_login import login_required, login_user, current_user, logout_user
-from app import app, db
+
 import sqlalchemy as sa
-from app.models import User, Expense
-from app.forms import UserRegisterForm, UserLoginForm, AddExpenseForm
-from flask import redirect, render_template, flash, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
+
+from app import db
+from app.forms import UserLoginForm, UserRegisterForm
+from app.models.expense import Expense
+from app.models.user import User
+
+
+users_bp = Blueprint('users', __name__)
 
 
 # index
-@app.route('/')
+@users_bp.route('/')
 def index():
     return render_template('base.html')
 
 
-@app.route('/dashboard')
+@users_bp.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('base.html')
+    expenses = db.session.scalars(
+        sa.Select(Expense).where(Expense.creator == current_user)
+    ).all()
+    return render_template('dashboard.html', expenses=expenses)
 
 
 # User registration
-@app.route('/register', methods=['POST', 'GET'])
+@users_bp.route('/register', methods=['POST', 'GET'])
 def register():
     form = UserRegisterForm()
     if form.validate_on_submit():
@@ -34,12 +43,12 @@ def register():
     return render_template('register.html', form=form)
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@users_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         next_page = request.args.get('next')
         if not next_page or urlsplit(next_page).netloc != '':
-            next_page = url_for('index')
+            next_page = url_for('users.index')
         return redirect(next_page)
 
     form = UserLoginForm()
@@ -50,7 +59,7 @@ def login():
         )
         if (user is None) or (not user.check_password(form.password.data)):
             flash("Wrong email or password")
-            return redirect(url_for('login'))
+            return redirect(url_for('users.login'))
         # log the user in
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
@@ -59,41 +68,21 @@ def login():
         # if netloc is not empty it means url contains domain
         # Full url including the domain name is ignored due to the security
         if not next_page or urlsplit(next_page).netloc != '':
-            next_page = url_for('index')
+            next_page = url_for('users.index')
         return redirect(next_page)
 
     return render_template('login.html', form=form)
 
 
-@app.route('/logout')
+@users_bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('users.index'))
 
 
-@app.route('/profile')
+@users_bp.route('/profile')
 @login_required
 def profile():
     if not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    # TODO: Show user profile ifno and edit profile link
-
-
-@app.route('/expenses', methods=['GET', 'POST'])
-@login_required
-def expenses():
-    form = AddExpenseForm()
-    if form.validate_on_submit():
-        # build the expense object
-        expense = Expense(
-            title=form.title.data,
-            amount=form.amount.data,
-            expense_date=form.date.data,
-            description=form.description.data,
-            creator=current_user
-        )
-        db.session.add(expense)
-        db.session.commit()
-        flash('Expense added succesfully')
-        return redirect(url_for('dashboard'))
-    return render_template('add_expense.html', form=form)
+        return redirect(url_for('users.login'))
+    # TODO: Show user profile info and edit profile link
