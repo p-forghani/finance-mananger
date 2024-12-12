@@ -2,7 +2,7 @@ from flask_login import login_required, current_user
 from app.utils.db_utils import get_user_expense_or_404
 from app import db
 from app.models.expense import Expense
-from app.forms import AddExpenseForm
+from app.forms import AddExpenseForm, EditExpenseForm
 from flask import redirect, render_template, flash, url_for
 from flask import Blueprint
 
@@ -37,10 +37,22 @@ def show_expense(expense_id):
     return render_template('expense.html', expense=expense)
 
 
-@expense_bp.route('/expense/edit/expense_id')
+@expense_bp.route('/expense/edit/<expense_id>', methods=['POST', 'GET'])
 @login_required
 def edit_expense(expense_id):
-    pass
+    # Build the form
+    form = EditExpenseForm()
+    expense = get_user_expense_or_404(expense_id)
+    if form.validate_on_submit():
+        expense.expense_date = form.date.data
+        expense.title = form.title.data
+        expense.amount = form.amount.data
+        expense.description = form.description.data
+        db.session.commit()
+        flash("Expense updated!")
+        return redirect(url_for('expenses.show_expense',
+                                expense_id=expense_id))
+    return render_template('edit_expense.html', form=form, expense=expense)
 
 
 @expense_bp.route("/expense/delete/<expense_id>", methods=['POST', 'GET'])

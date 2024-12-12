@@ -51,3 +51,12 @@ class AddExpenseForm(FlaskForm):
     amount = FloatField('Amount', validators=[DataRequired()])
     description = TextAreaField("Description")
     date = DateField('Date', default=datetime.today())
+    submit = SubmitField("Add Expense")
+
+
+class EditExpenseForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired(), Length(1, 128)])
+    amount = FloatField('Amount', validators=[DataRequired()])
+    description = TextAreaField("Description")
+    date = DateField('Date', default=datetime.today())
+    submit = SubmitField("Edit Expense")
