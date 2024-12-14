@@ -6,7 +6,6 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
 from app.forms import UserLoginForm, UserRegisterForm
-from app.models.expense import Expense
 from app.models.user import User
 
 
@@ -17,15 +16,6 @@ users_bp = Blueprint('users', __name__)
 @users_bp.route('/')
 def index():
     return render_template('base.html')
-
-
-@users_bp.route('/dashboard')
-@login_required
-def dashboard():
-    expenses = db.session.scalars(
-        sa.Select(Expense).where(Expense.creator == current_user)
-    ).all()
-    return render_template('dashboard.html', expenses=expenses)
 
 
 # User registration

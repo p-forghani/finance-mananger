@@ -1,10 +1,12 @@
-from flask_login import login_required, current_user
-from app.utils.db_utils import get_user_expense_or_404
+import sqlalchemy as sa
+from flask_wtf import FlaskForm
+from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
 from app import db
-from app.models.expense import Expense
 from app.forms import AddExpenseForm, EditExpenseForm
-from flask import redirect, render_template, flash, url_for
-from flask import Blueprint
+from app.models.expense import Expense
+from app.utils.db_utils import get_user_expense_or_404
 
 expense_bp = Blueprint('expenses', __name__)
 
@@ -25,16 +27,32 @@ def add_expense():
         db.session.add(expense)
         db.session.commit()
         flash('Expense added succesfully')
-        return redirect(url_for('users.dashboard'))
+        return redirect(url_for('expenses.expenses'))
     return render_template('add_expense.html', form=form)
+
+
+@expense_bp.route('/expenses')
+@login_required
+def expenses():
+    # Add search by title feature to the expenses
+    search_query = request.args.get('search', default='')
+    query = sa.select(Expense).where(Expense.creator == current_user)
+    if search_query:
+        query = query.where(
+            Expense.title.ilike(f"%{search_query}%".lower())
+        )
+    expenses = db.session.scalars(query)
+    return render_template('expenses.html', expenses=expenses,
+                           search_query=search_query)
 
 
 @expense_bp.route("/expense/<expense_id>")
 @login_required
 def show_expense(expense_id):
-    """Show the expense with the proper template"""
+    """Show the expense"""
     expense = get_user_expense_or_404(expense_id)
-    return render_template('expense.html', expense=expense)
+    form = FlaskForm()
+    return render_template('expense.html', expense=expense, form=form)
 
 
 @expense_bp.route('/expense/edit/<expense_id>', methods=['POST', 'GET'])
@@ -64,4 +82,4 @@ def delete_expense(expense_id):
     db.session.delete(expense)
     db.session.commit()
     flash('Expense Deleted Successfully')
-    return redirect(url_for('users.dashboard'))
+    return redirect(url_for('expenses.expenses'))
