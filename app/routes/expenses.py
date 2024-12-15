@@ -41,9 +41,12 @@ def expenses():
         query = query.where(
             Expense.title.ilike(f"%{search_query}%".lower())
         )
-    expenses = db.session.scalars(query)
-    return render_template('expenses.html', expenses=expenses,
-                           search_query=search_query)
+    expenses = db.session.scalars(query).all()
+
+    total_amount = sum(expense.amount for expense in expenses)
+    return render_template(
+        'expenses.html', expenses=expenses, search_query=search_query,
+        total_amount=total_amount)
 
 
 @expense_bp.route("/expense/<expense_id>")
