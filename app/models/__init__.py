@@ -1,3 +1,2 @@
-from .expense import Expense
-from .user import User
-from .income import Income
+from .expense import Expense  # noqa
+from .user import User  # noqa

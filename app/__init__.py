@@ -19,6 +19,7 @@ def create_app():
     migrate.init_app(app, db)
     login.init_app(app)
     login.login_view = 'users.login'
+    global sendgrid
 
     # Register blueprints
     from app.routes.expenses import expense_bp as expenses_blueprint

@@ -8,3 +8,7 @@ ROUTES = {
     'edit_expense': 'expenses_edit_expense',
     'delete_expense': 'expenses_delete_expense',
 }
+
+ADMINS = [
+    'forghani.dev@gmail.com'
+]

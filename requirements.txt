@@ -2,3 +2,4 @@ Python==3.11.9
 Flask==3.0.3
 Flask-WTF==1.2.1
 Flask-Login==0.6.3
+sendgrid==6.11.0
