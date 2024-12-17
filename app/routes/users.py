@@ -1,13 +1,16 @@
 from urllib.parse import urlsplit
 
 import sqlalchemy as sa
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import (Blueprint, abort, current_app, flash, redirect,
+                   render_template, request, url_for)
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
-from app.forms import UserLoginForm, UserRegisterForm
+from app.constants import ROUTES
+from app.email import send_reset_password_email
+from app.forms import (ForgotPasswordForm, ResetPasswordForm, UserLoginForm,
+                       UserRegisterForm)
 from app.models.user import User
-
 
 users_bp = Blueprint('users', __name__)
 
@@ -67,6 +70,7 @@ def login():
 @users_bp.route('/logout')
 def logout():
     logout_user()
+    flash("You logged out successfully!")
     return redirect(url_for('users.index'))
 
 
@@ -74,5 +78,42 @@ def logout():
 @login_required
 def profile():
     if not current_user.is_authenticated:
-        return redirect(url_for('users.login'))
+        return redirect(url_for(ROUTES.login))
     # TODO: Show user profile info and edit profile link
+
+
+@users_bp.route('/forgot_password', methods=['POST', 'GET'])
+def forgot_password():
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        # Check if user exist
+        user = db.session.scalar(
+            sa.select(User).where(User.email == form.email.data)
+        )
+        if user:
+            send_reset_password_email(user)
+        flash('The instructions to reset password is sent to your email')
+        return redirect(url_for(ROUTES.forgot_password))
+    return render_template('forgot_password.html', form=form)
+    # TODO: don't let browser to store chache
+
+
+@users_bp.route('/reset_password', methods=['POST', 'GET'])
+def reset_password():
+    form = ResetPasswordForm()
+    token = request.args.get('token')
+    # Verify the token
+    user_id = User.verify_token(token)
+    current_app.logger.info(f'user_id = {user_id}')
+    if user_id is None:
+        current_app.logger.error('user id not found')
+        abort(404)
+    user: User = db.get_or_404(User, ident=user_id)
+    if form.validate_on_submit():
+        # Reset the password
+        user.set_password(password=form.password.data)
+        db.session.commit()
+        flash('Password Changed Successfully')
+        return redirect(url_for(ROUTES.login))
+    # Show the reset password form
+    return render_template('reset_password.html', form=form)

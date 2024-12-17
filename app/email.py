@@ -1,10 +1,11 @@
-from flask import current_app
+from flask import current_app, render_template
 from sendgrid.helpers.mail import Mail
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from app.constants import ADMINS
+from app.models.user import User
 
 
 def init_sendgrid():
@@ -17,7 +18,7 @@ def init_sendgrid():
 sendgrid = init_sendgrid()
 
 
-def send_email(to, subject, text, html=None, sender=None):
+def send_email(to, subject=None, text=None, html=None, sender=None):
     """Sends an email using SendGrid
 
     Args:
@@ -48,3 +49,15 @@ def send_email(to, subject, text, html=None, sender=None):
     except Exception as e:
         current_app.logger.error(f'Failed to send email: {e}')
         raise
+
+
+def send_reset_password_email(user: User):
+    url = user.get_reset_password_url()
+    send_email(
+        to=user.email,
+        subject='Reset Password Request',
+        html=render_template('email/reset_password_email.html', user=user,
+                             url=url),
+        text=render_template('email/reset_password_email.txt', user=user,
+                             url=url)
+    )

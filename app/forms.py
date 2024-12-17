@@ -60,3 +60,17 @@ class EditExpenseForm(FlaskForm):
     description = TextAreaField("Description")
     date = DateField('Date', default=datetime.today())
     submit = SubmitField("Edit Expense")
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = EmailField('Email', validators=[
+        DataRequired(), Length(max=64), Email()])
+    submit = SubmitField('Reset Password')
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired()])
+    password2 = PasswordField('Repeat New Password', validators=[
+        DataRequired(), EqualTo('password')
+    ])
+    submit = SubmitField('Update Password')

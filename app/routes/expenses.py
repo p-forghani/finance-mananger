@@ -80,7 +80,6 @@ def edit_expense(expense_id):
 @login_required
 def delete_expense(expense_id):
     '''Deletes the expense'''
-    # TODO: delete an expense
     expense = get_user_expense_or_404(expense_id)
     db.session.delete(expense)
     db.session.commit()

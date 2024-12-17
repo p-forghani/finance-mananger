@@ -2,7 +2,9 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from itsdangerous import URLSafeTimedSerializer
 
+from app.constants import ROUTES
 from config import Config
 
 db = SQLAlchemy()
@@ -15,11 +17,15 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Make ROUTES available globally
+    @app.context_processor
+    def inject_routes():
+        return dict(ROUTES=ROUTES)
+
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
     login.login_view = 'users.login'
-    global sendgrid
 
     # Register blueprints
     from app.routes.expenses import expense_bp as expenses_blueprint
