@@ -33,6 +33,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash("You signed up successfully")
+        redirect(url_for(ROUTES.login))
     return render_template('register.html', form=form)
 
 
