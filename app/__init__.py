@@ -2,7 +2,6 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from itsdangerous import URLSafeTimedSerializer
 
 from app.constants import ROUTES
 from config import Config

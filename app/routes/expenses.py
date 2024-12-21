@@ -1,7 +1,7 @@
 import sqlalchemy as sa
-from flask_wtf import FlaskForm
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from flask_wtf import FlaskForm
 
 from app import db
 from app.forms import AddExpenseForm, EditExpenseForm
@@ -34,19 +34,38 @@ def add_expense():
 @expense_bp.route('/expenses')
 @login_required
 def expenses():
+    '''Shows total list of expense filtered by request arguments'''
+
     # Add search by title feature to the expenses
     search_query = request.args.get('search', default='')
-    query = sa.select(Expense).where(Expense.creator == current_user)
+
+    query = (
+        sa.select(Expense)
+        .where(Expense.creator == current_user)
+        .order_by(Expense.expense_date))
+
     if search_query:
         query = query.where(
             Expense.title.ilike(f"%{search_query}%".lower())
         )
-    expenses = db.session.scalars(query).all()
 
-    total_amount = sum(expense.amount for expense in expenses)
+    total_amount = db.session.execute(
+        sa.select(sa.func.sum(Expense.amount))
+        .where(Expense.creator == current_user)
+        .where(
+            Expense.title.ilike(f"%{search_query}%") if search_query else True)
+    ).scalar() or 0  # Default to 0 if no results
+
+    page = request.args.get('page', default=1)
+    page = int(page)
+    print(type(page))
+    per_page = 10
+    expenses_pagination = db.paginate(
+        select=query, page=page, per_page=per_page)
+
     return render_template(
-        'expenses.html', expenses=expenses, search_query=search_query,
-        total_amount=total_amount)
+        'expenses.html', expenses_pagination=expenses_pagination,
+        search_query=search_query, total_amount=total_amount)
 
 
 @expense_bp.route("/expense/<expense_id>")
